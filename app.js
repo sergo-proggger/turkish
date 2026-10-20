@@ -12,7 +12,6 @@ const UNITS = [
   { id: 'B1', title: 'Уровень B1 — связная речь', sub: 'Условия, причастия, деепричастия, пересказ, поездки' }
 ];
 const KEY = 'turkish-v1';
-const APP_URL = 'https://sergo-proggger.github.io/turkish/';
 const GOALS = [
   { xp: 10, name: 'Лёгкая', note: 'около 5 минут' },
   { xp: 20, name: 'Обычная', note: 'около 10 минут' },
@@ -33,7 +32,7 @@ const weekIdx = n => (dayDate(n).getDay() + 6) % 7;
 // ---------- состояние ----------
 const defaults = () => ({
   v: 1, goal: 20, xp: {}, total: 0, streak: 0, best: 0, lastGoal: null, freezes: 0, frozen: [], met: [],
-  lessons: {}, ex: {}, words: {}, voice: true, autoplay: true, rate: 0.85, widget: false, theme: 'auto'
+  lessons: {}, ex: {}, words: {}, voice: true, autoplay: true, rate: 0.85, theme: 'auto'
 });
 let S = load();
 function load() {
@@ -206,7 +205,6 @@ function render() {
   else if (r === 'review') viewReview();
   else if (r === 'dict') viewDict();
   else if (r === 'profile') viewProfile();
-  else if (r === 'widget') viewWidget();
 }
 
 function topBar(title, { backBtn = false, closeBtn = false } = {}) {
@@ -225,7 +223,7 @@ function renderTabs() {
   const t = (name, icon, label, badge) => `<button class="tab" data-act="tab" data-tab="${name}" ${tabOf(route.name) === name ? 'aria-current="page"' : ''}>${icon}<span>${label}</span>${badge ? `<span class="badge">${badge > 99 ? '99+' : badge}</span>` : ''}</button>`;
   $tabs.innerHTML = `<div class="tabs-in">${t('home', I.book, 'Курс')}${t('review', I.repeat, 'Повторение', due)}${t('dict', I.dict, 'Словарь')}${t('profile', I.user, 'Профиль')}</div>`;
 }
-const tabOf = n => (n === 'lesson' ? 'home' : n === 'widget' ? 'profile' : n);
+const tabOf = n => (n === 'lesson' ? 'home' : n);
 
 // ---------- главная ----------
 function nextLesson() { return LESSONS.find(l => !(S.lessons[l.id] && S.lessons[l.id].done)) || null; }
@@ -590,7 +588,6 @@ function viewResult() {
     h += `<div class="card mistakes"><b>Над чем поработать</b><ul>${uniq.map(m => `<li><div class="q">${esc(m.q)}</div><div class="a">${esc(m.a)}</div></li>`).join('')}</ul></div>`;
   }
   h += `<div class="stack">`;
-  if (isIOS() && S.widget) h += `<button class="btn ghost block" data-act="widget-push">${I.flame(18)} Обновить виджет</button>`;
   if (s.type === 'lesson' && s.lessonDone) {
     const nx = nextLesson();
     if (nx) h += `<button class="btn block" data-act="open-fresh" data-id="${nx.id}">Следующий урок</button>`;
@@ -680,9 +677,6 @@ function viewProfile() {
     <div class="stat"><div class="v">${S.met.length}</div><div class="l">дней с целью</div></div></div>`;
   h += `<section class="card stack"><h2 style="font-size:18px">Дневная цель</h2><div class="goals">${GOALS.map(g => `<button class="goal-opt" data-act="goal" data-xp="${g.xp}" aria-pressed="${S.goal === g.xp}"><div class="g1">${g.name} · ${g.xp} XP</div><div class="g2">${g.note}</div></button>`).join('')}</div>
     <p class="muted small">Одна практика урока даёт 15–25 XP: по 1 за каждый верный ответ и бонус за завершение.</p></section>`;
-  h += `<section class="card"><h2 style="font-size:18px;margin-bottom:6px">Виджет для iPhone</h2>
-    <p class="muted small" style="margin-bottom:12px">Большой виджет на экране «Домой» с огоньком, днями подряд и календарём.</p>
-    <button class="btn ghost block" data-act="widget-page">Настроить виджет</button></section>`;
   h += `<section class="card"><h2 style="font-size:18px;margin-bottom:4px">Настройки</h2>
     <div class="setting"><div class="grow"><div>Озвучка</div><div class="muted small">${trVoice ? 'Голос: ' + esc(trVoice.name) : 'Турецкий голос не найден, задания на слух отключены'}</div></div><button class="switch" role="switch" aria-checked="${S.voice}" data-act="toggle" data-k="voice" aria-label="Озвучка"></button></div>
     <div class="setting"><div class="grow"><div>Озвучивать ответ</div><div class="muted small">После проверки звучит правильная фраза</div></div><button class="switch" role="switch" aria-checked="${S.autoplay}" data-act="toggle" data-k="autoplay" aria-label="Озвучивать ответ"></button></div>
@@ -705,68 +699,6 @@ function viewProfile() {
       S = Object.assign(defaults(), s); save(); applyTheme(); toast('Прогресс загружен'); render();
     }).catch(() => toast('Не получилось прочитать файл'));
   });
-}
-
-// ---------- виджет (Scriptable) ----------
-const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-let widgetCode = '';
-function widgetData() {
-  const today = dayNum();
-  const from = today - 41;
-  const nx = nextLesson();
-  return {
-    s: S.streak, b: S.best, lg: S.lastGoal != null ? isoDay(S.lastGoal) : '', f: S.freezes, g: S.goal,
-    tx: todayXP(), td: isoDay(today),
-    m: S.met.filter(d => d >= from).map(isoDay), fr: S.frozen.filter(d => d >= from).map(isoDay),
-    w: learnedCount(), ld: LESSONS.filter(l => S.lessons[l.id] && S.lessons[l.id].done).length, lt: LESSONS.length,
-    n: nx ? (LESSONS.indexOf(nx) + 1) + '. ' + nx.title : 'Курс пройден'
-  };
-}
-function pushWidget() {
-  S.widget = true; save();
-  location.href = 'scriptable:///run/' + encodeURIComponent('Turkish') + '?data=' + encodeURIComponent(JSON.stringify(widgetData()));
-}
-function viewWidget() {
-  topBar('Виджет для iPhone', { backBtn: true });
-  $view.innerHTML = `<div class="stack">
-    <section class="card stack">
-      <p>Сайты сами не могут ставить виджеты на iPhone, поэтому виджет работает через бесплатное приложение <b>Scriptable</b>. Настраивается один раз, минуты за три.</p>
-      <ol class="steps">
-        <li>Установи <b>Scriptable</b> из App Store (бесплатно, разработчик Simon B. Støvring).</li>
-        <li>Нажми «Скопировать скрипт» ниже.</li>
-        <li>Открой Scriptable, нажми <b>+</b> вверху, вставь скрипт. Нажми на название вверху и назови скрипт точно <b>Turkish</b>. Нажми «Done».</li>
-        <li>Вернись сюда и нажми «Обновить виджет»: откроется Scriptable и покажет виджет с твоей серией.</li>
-        <li>На экране «Домой» зажми пустое место → <b>+</b> слева вверху → найди Scriptable → выбери самый большой размер → «Добавить виджет».</li>
-        <li>Зажми виджет → «Изменить виджет» → в поле Script выбери <b>Turkish</b>.</li>
-      </ol>
-      <button class="btn block" data-act="copy-widget" id="copyBtn">Скопировать скрипт</button>
-      <button class="btn accent block" data-act="widget-push">${I.flame(18)} Обновить виджет</button>
-    </section>
-    <section class="card stack">
-      <h2 style="font-size:17px">Как виджет узнаёт про занятия</h2>
-      <p class="muted small">После каждого занятия на итоговом экране появится кнопка «Обновить виджет»: одно нажатие передаёт серию в виджет. Если день пропущен, виджет сам это заметит в полночь и покажет, что серия сгорела или её спасла заморозка, даже без обновления. Нажатие на виджет открывает курс.</p>
-    </section>
-    <details class="card"><summary style="cursor:pointer;font-weight:600">Скрипт вручную</summary>
-      <p class="muted small" style="margin:10px 0">Если кнопка копирования не сработала, выдели текст и скопируй.</p>
-      <textarea class="code-box" id="wcode" readonly>Загрузка…</textarea></details>
-  </div>`;
-  const fill = () => { const el = document.getElementById('wcode'); if (el) el.value = widgetCode; };
-  if (widgetCode) fill();
-  else fetch('widget-scriptable.js').then(r => r.text()).then(t => { widgetCode = t; fill(); }).catch(() => {});
-}
-function copyWidget() {
-  if (!widgetCode) { toast('Скрипт ещё загружается, нажми через секунду'); return; }
-  const done = () => { S.widget = true; save(); toast('Скрипт скопирован'); };
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(widgetCode).then(done, () => fallbackCopy() ? done() : toast('Скопируй текст из блока ниже'));
-  } else if (fallbackCopy()) done(); else toast('Скопируй текст из блока ниже');
-}
-function fallbackCopy() {
-  const el = document.getElementById('wcode');
-  if (!el) return false;
-  el.closest('details').open = true;
-  el.focus(); el.select(); el.setSelectionRange(0, el.value.length);
-  try { return document.execCommand('copy'); } catch (e) { return false; }
 }
 
 // ---------- мелочи ----------
@@ -863,9 +795,6 @@ document.addEventListener('click', e => {
     case 'next': nextTask(); break;
     case 'goal': S.goal = +b.dataset.xp; if (todayXP() >= S.goal && S.lastGoal !== dayNum()) addXP(0); save(); render(); break;
     case 'toggle': S[b.dataset.k] = !S[b.dataset.k]; save(); render(); break;
-    case 'widget-page': go({ name: 'widget' }); break;
-    case 'widget-push': pushWidget(); break;
-    case 'copy-widget': copyWidget(); break;
     case 'export': {
       const blob = new Blob([JSON.stringify(S)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
