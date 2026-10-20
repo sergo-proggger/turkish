@@ -1,0 +1,17 @@
+{
+  "name": "Турецкий с нуля",
+  "short_name": "Турецкий",
+  "description": "Курс турецкого от алфавита до B1: теория, слова с озвучкой, упражнения, повторение и ударный режим",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6F2EA",
+  "theme_color": "#0E6A72",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

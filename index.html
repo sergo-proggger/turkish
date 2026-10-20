@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Турецкий с нуля</title>
+<meta name="description" content="Курс турецкого языка от алфавита до B1: теория, слова с озвучкой, упражнения, повторение и ударный режим">
+<meta name="theme-color" content="#F6F2EA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14130F" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Турецкий">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header class="top" id="top"></header>
+  <main id="view" tabindex="-1"></main>
+  <nav class="tabs" id="tabs" aria-label="Разделы"></nav>
+</div>
+<div id="overlay" hidden></div>
+<script src="course-1.js"></script>
+<script src="course-2.js"></script>
+<script src="course-3.js"></script>
+<script src="course-4.js"></script>
+<script src="photos.js"></script>
+<script src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
